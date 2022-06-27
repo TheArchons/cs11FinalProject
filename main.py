@@ -1,3 +1,6 @@
+import os
+import json
+
 # given a 2d array, return the winner only if each square is filled with x or y
 def checkWinner(board):
     # check columns
@@ -43,40 +46,82 @@ def setupBoard():
 # a local 1v1 game
 def localGame():
     print()
-    board = setupBoard()
-    isXTurn = True
-    while checkWinner(board) == "none" and not checkTie(board):
-        if isXTurn:
-            print()
-            print("X's turn")
-            print(board)
-            while True:
-                x = int(input("Please enter a row: "))
-                y = int(input("Please enter a column: "))
-                if board[x][y] == " ":
-                    break
-                print("That square is already taken")
-            board[x][y] = "x"
-            isXTurn = False
+    scores = json.loads(open("scores.json", "r").read())
+
+    print("Welcome! Please enter your names: ")
+    while True:
+        playerX = input("X: ")
+        if playerX in scores["local"]:
+            useScore = input("name already taken, use existing score? (y/n)")
+            if useScore == "y":
+                break
+            else:
+                continue
         else:
-            print()
-            print("O's turn")
-            print(board)
-            while True:
-                x = int(input("Please enter a row: "))
-                y = int(input("Please enter a column: "))
-                if board[x][y] == " ":
-                    break
-                print("That square is already taken")
-            board[x][y] = "o"
-            isXTurn = True
-    print(board)
-    if checkWinner(board) == "x":
-        print("X wins!")
-    elif checkWinner(board) == "o":
-        print("O wins!")
-    else:
-        print("Tie!")
+            scores["local"][playerX] = 0
+            break
+    while True:
+        playerO = input("O: ")
+        if playerO in scores["local"]:
+            useScore = input("name already taken, use existing score? (y/n)")
+            if useScore == "y":
+                break
+            else:
+                continue
+        else:
+            scores["local"][playerO] = 0
+            break
+    while True:
+        board = setupBoard()
+        isXTurn = True
+        while checkWinner(board) == "none" and not checkTie(board):
+            if isXTurn:
+                print()
+                print("X's turn")
+                print(board)
+                while True:
+                    x = int(input("Please enter a row: "))
+                    y = int(input("Please enter a column: "))
+                    if board[x][y] == " ":
+                        break
+                    print("That square is already taken")
+                board[x][y] = "x"
+                isXTurn = False
+            else:
+                print()
+                print("O's turn")
+                print(board)
+                while True:
+                    x = int(input("Please enter a row: "))
+                    y = int(input("Please enter a column: "))
+                    if board[x][y] == " ":
+                        break
+                    print("That square is already taken")
+                board[x][y] = "o"
+                isXTurn = True
+        print(board)
+
+        # add scores
+        if checkWinner(board) == "x":
+            print("X wins!")
+            scores["local"][playerX] += 1
+        elif checkWinner(board) == "o":
+            print("O wins!")
+            scores["local"][playerO] += 1
+        else:
+            print("Tie!")
+        print()
+
+        # print scores
+        print("Current scores:")
+        print(playerX + ": " + str(scores["local"][playerX]))
+        print(playerO + ": " + str(scores["local"][playerO]))
+
+        # save scores
+        open("scores.json", "w").write(json.dumps(scores))
+        checkContinue = input("Play again? (y/n)")
+        if checkContinue == "n":
+            break
     return
 
 # a game against a computer
@@ -89,23 +134,51 @@ def remoteGame():
     print()
     return
 
+def scoreboard():
+    print()
+    scores = json.loads(open("scores.json", "r").read())
+    print("Local scores:")
+    for key in scores["local"]:
+        print(key + ": " + str(scores["local"][key]))
+
+    print()
+
+    print("Remote scores:")
+    for key in scores["remote"]:
+        print(key + ": " + str(scores["remote"][key]))
+    
+    input("press enter key to continue...")
+    print()
+    
+
 def menu():
     print("welcome to tic tac toe! PLease select an option:")
     print("1. Play against a computer (I'm lonely)")
     print("2. Play against a local player")
     print("3. Play against a remote player")
-    print("4. Quit")
+    print("4. Scoreboard")
+    print("5. Quit")
     choice = input("Please enter your choice: ")
     return choice
 
+# create scores.json if it doesn't exist
+if not os.path.isfile("scores.json"):
+    scores = {}
+    scores["local"] = {"computer":0,}
+    scores["remote"] = {}
+    with open("scores.json", "w") as f:
+        json.dump(scores, f)
+
 choice = menu()
-while choice != "4":
+while choice != "5":
     if choice == "1":
         computerGame()
     elif choice == "2":
         localGame()
     elif choice == "3":
         print(checkWinner([["x", "x", " "], [" ", "y", " "], [" ", " ", "x"]]))
+    elif choice == "4":
+        scoreboard()
     else:
         print("Invalid choice", end="\n\n")
     choice = menu()
