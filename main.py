@@ -115,6 +115,8 @@ def getWinningMove(board, piece):
         elif board[i][2-i] != piece:
             noMove = True
             break
+    if not noMove:
+        return [emptySpot, 2-emptySpot]
     
     return [-1, -1] # no winning moves in the board
 
@@ -340,9 +342,7 @@ class computer():
 
         return 
 
-    def computerEasy(self):
-        # this ai will just pick a random spot
-
+    def placeRandom(self):
         # find all empty spaces
         emptySpaces = []
         for i in range(3):
@@ -426,10 +426,23 @@ class computer():
         
         return False
 
-    def computerMedium(self):
-        # this ai will block the player's winning move, win, or place a random piece
-        pass
+    def computerEasy(self):
+        # this ai will just pick a random spot
+        # note: should be relatively easy to win, as long as you don't get unlucky
+        self.placeRandom()
 
+    def computerMedium(self):
+        # this ai will win, block the player's win, or place a random piece
+        # note: to beat this ai, the player must fork
+        if self.winningMove(self.computer):
+            return
+
+        if self.winningMove(self.player):
+            return
+
+        # if there is no winning move, place a random piece
+        self.placeRandom()
+        
     def computerHard(self):
         # this ai will check in the following order:
 
@@ -453,6 +466,8 @@ class computer():
 
         # 7. check if the sides are empty, if so, take one of them
 
+        # note: I believe the ai will never lose
+
         # check if the computer can win
         if self.winningMove(self.computer):
             return
@@ -471,8 +486,6 @@ class computer():
         
         # check for empty locations
         self.empties()
-
-
 
 # online game
 def remoteGame():
