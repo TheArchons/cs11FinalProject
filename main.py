@@ -52,6 +52,115 @@ def setupBoard():
             board[i].append(" ")
     return board
 
+# return the final piece location to win given the board and piece
+def getWinningMove(board, piece):
+    # check columns
+    for i in range(3):
+        # check if the column is occupied by another piece
+        emptySpot = -1
+        noMove = False
+        for j in range(3):
+            if board[i][j] == " ":
+                if emptySpot != -1: # if there is an empty spot, break
+                    noMove = True
+                    break  # 2 empty spaces in the same row, no possible winning move
+                emptySpot = j
+            elif board[i][j] != piece:
+                noMove = True
+                break # occupied, no possible winning move
+        if not noMove:
+            return [i, emptySpot]
+        
+    # check rows
+    for i in range(3):
+        # check if the row is occupied by another piece
+        emptySpot = -1
+        noMove = False
+        for j in range(3):
+            if board[j][i] == " ":
+                if emptySpot != -1:
+                    noMove = True
+                    break
+                emptySpot = j
+            elif board[j][i] != piece:
+                noMove = True
+                break
+        
+        if not noMove:
+            return [emptySpot, i]
+
+    # check diagonals
+    emptySpot = -1
+    noMove = False
+    for i in range(3):
+        if board[i][i] == " ":
+            if emptySpot != -1:
+                noMove = True
+                break
+            emptySpot = i
+        elif board[i][i] != piece:
+            noMove = True
+            break
+    if not noMove:
+        return [emptySpot, emptySpot]
+    
+    emptySpot = -1
+    noMove = False
+    for i in range(3):
+        if board[i][2-i] == " ":
+            if emptySpot != -1:
+                noMove = True
+                break
+            emptySpot = i
+        elif board[i][2-i] != piece:
+            noMove = True
+            break
+    
+    return [-1, -1] # no winning moves in the board
+
+# try adjacents
+def tryAdjacents(board, location):
+    tries = {
+        "up": [location[0]-1, location[1]],
+        "down": [location[0]+1, location[1]],
+        "left": [location[0], location[1]-1],
+        "right": [location[0], location[1]+1],
+        "upleft": [location[0]-1, location[1]-1],
+        "upright": [location[0]-1, location[1]+1],
+        "downleft": [location[0]+1, location[1]-1],
+        "downright": [location[0]+1, location[1]+1]
+    }
+    adjacents = set()
+
+    for key in tries:
+        # skip if keys are below 0 or above 2
+        if tries[key][0] < 0 or tries[key][0] > 2:
+            continue
+        if tries[key][1] < 0 or tries[key][1] > 2:
+            continue
+        # skip if the location is already occupied
+        if board[tries[key][0]][tries[key][1]] != " ":
+            continue
+        adjacents.add(tuple(tries[key]))
+
+    if len(adjacents) == 0:
+        return None
+    else:
+        return adjacents
+
+# find adjacents to a given piece in the board
+def findAdjacents(board, piece):
+    adjacents = set()
+    for i in range(3):
+        for j in range(3):
+            if board[i][j] == piece:
+                tempAdjacents = tryAdjacents(board, [i, j])
+                if tempAdjacents != None:
+                    # combine the adjacents with the existing set
+                    adjacents = adjacents.union(tempAdjacents)
+    return adjacents
+
+
 # a local 1v1 game
 def localGame():
     print()
@@ -204,7 +313,6 @@ class computer():
                     self.computerMedium()
                 else:
                     self.computerHard()
-                print(self.board)
                 isPlayerTurn = True
             if checkWinner(self.board) != "none":
                 break
@@ -233,6 +341,8 @@ class computer():
         return 
 
     def computerEasy(self):
+        # this ai will just pick a random spot
+
         # find all empty spaces
         emptySpaces = []
         for i in range(3):
@@ -250,13 +360,119 @@ class computer():
 
         return
 
+    def placeAdjacent(self, piece):
+        adjacents = findAdjacents(self.board, piece)
+
+        if (1, 1) in adjacents: # if the middle is open, place there
+            self.board[1][1] = self.computer
+            calculating()
+            return True
+
+        for i in [(0, 0), (0, 2), (2, 0), (2, 2)]: # if it is in the corners, place there
+            if i in adjacents:
+                self.board[i[0]][i[1]] = self.computer
+                calculating()
+                return True
+        
+        for i in [(0, 1), (1, 0), (1, 2), (2, 1)]: # if it is in the sides, place there
+            if i in adjacents:
+                self.board[i[0]][i[1]] = self.computer
+                calculating()
+                return True
+        
+        return False
+
+    def empties(self):
+        # check if the center is empty
+        if self.board[1][1] == " ":
+            self.board[1][1] = self.computer
+            calculating()
+            return
+        
+        # check if the corners are empty
+        corners = [
+            [0, 0],
+            [0, 2],
+            [2, 0],
+            [2, 2]
+        ]
+
+        for key in corners:
+            if self.board[key[0]][key[1]] == " ":
+                self.board[key[0]][key[1]] = self.computer
+                calculating()
+                return
+        
+        # check if the sides are empty
+        sides = [
+            [0, 1],
+            [1, 0],
+            [1, 2],
+            [2, 1]
+        ]
+
+        for key in sides:
+            if self.board[key[0]][key[1]] == " ":
+                self.board[key[0]][key[1]] = self.computer
+                calculating()
+                return
+
+    def winningMove(self, piece):
+        winningMove = getWinningMove(self.board, piece)
+        if winningMove != [-1, -1]:
+            self.board[winningMove[0]][winningMove[1]] = self.computer
+            calculating()
+            return True
+        
+        return False
 
     def computerMedium(self):
-
+        # this ai will block the player's winning move, win, or place a random piece
         pass
+
     def computerHard(self):
+        # this ai will check in the following order:
 
-        pass
+        # 1. check if the computer can win, if so, win
+
+        # 2. check if the player can win, if so, block
+
+        # 3. check if the computer can place adjacent to one of the computer's pieces, if so, place there in the following order
+        #   a. if the corners are open, place there
+        #   b. if the sides are open, place there
+        #   note: we do not need to check the center, because the computer's first piece will be in the center unless taken by the player
+
+        # 4. check if the computer can place adjacent to one of the player's pieces, if so, place there in the following order
+        #   a. if the middle is open, place there
+        #   b. if the corners are open, place there
+        #   c. if the sides are open, place there
+
+        # 5. check if the center is empty, if so, take it
+
+        # 6. check if the corners are empty, if so, take one of them
+
+        # 7. check if the sides are empty, if so, take one of them
+
+        # check if the computer can win
+        if self.winningMove(self.computer):
+            return
+        
+        # check if the player can win
+        if self.winningMove(self.player):
+            return
+        
+        # check if the computer can place adjacent to one of the computer's pieces
+        if self.placeAdjacent(self.computer) == True:
+            return
+        
+        # check if the computer can place adjacent to one of the player's pieces
+        if self.placeAdjacent(self.player) == True:
+            return
+        
+        # check for empty locations
+        self.empties()
+
+
 
 # online game
 def remoteGame():
@@ -278,7 +494,6 @@ def scoreboard():
     
     input("press enter to continue...")
     print()
-    
 
 def menu():
     print("welcome to tic tac toe! PLease select an option:")
@@ -290,24 +505,27 @@ def menu():
     choice = input("Please enter your choice: ")
     return choice
 
-# create scores.json if it doesn't exist
-if not os.path.isfile("scores.json"):
-    scores = {}
-    scores["local"] = {"computer":0,}
-    scores["remote"] = {}
-    with open("scores.json", "w") as f:
-        json.dump(scores, f)
+def main():
+    # create scores.json if it doesn't exist
+    if not os.path.isfile("scores.json"):
+        scores = {}
+        scores["local"] = {"computer":0,}
+        scores["remote"] = {}
+        with open("scores.json", "w") as f:
+            json.dump(scores, f)
 
-choice = menu()
-while choice != "5":
-    if choice == "1":
-        computer()
-    elif choice == "2":
-        localGame()
-    elif choice == "3":
-        print(checkWinner([["x", "x", " "], [" ", "y", " "], [" ", " ", "x"]]))
-    elif choice == "4":
-        scoreboard()
-    else:
-        print("Invalid choice", end="\n\n")
     choice = menu()
+    while choice != "5":
+        if choice == "1":
+            computer()
+        elif choice == "2":
+            localGame()
+        elif choice == "3":
+            print(checkWinner([["x", "x", " "], [" ", "y", " "], [" ", " ", "x"]]))
+        elif choice == "4":
+            scoreboard()
+        else:
+            print("Invalid choice", end="\n\n")
+        choice = menu()
+
+main()

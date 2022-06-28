@@ -128,3 +128,6 @@ dmypy.json
 # Pyre type checker
 .pyre/
 scores.json
+
+# visual studio code
+.vscode/
