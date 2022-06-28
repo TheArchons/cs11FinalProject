@@ -185,7 +185,7 @@ def localGame():
     while True:
         playerX = input("X: ")
         if playerX in scores["local"]:
-            useScore = input("name already taken, use existing score? (y/n)")
+            useScore = input("name already taken, use existing score? (y/n) ")
             if useScore == "y":
                 break
             else:
@@ -195,8 +195,11 @@ def localGame():
             break
     while True:
         playerO = input("O: ")
+        if playerO == playerX:
+            print("names must be different")
+            continue
         if playerO in scores["local"]:
-            useScore = input("name already taken, use existing score? (y/n)")
+            useScore = input("name already taken, use existing score? (y/n) ")
             if useScore == "y":
                 break
             else:
@@ -236,10 +239,10 @@ def localGame():
 
     # add scores
     if checkWinner(board) == "x":
-        print("X wins!")
+        print("{} wins!".format(playerX))
         scores["local"][playerX] += 1
     elif checkWinner(board) == "o":
-        print("O wins!")
+        print("{} wins!".format(playerO))
         scores["local"][playerO] += 1
     else:
         print("Tie!")
@@ -252,6 +255,10 @@ def localGame():
 
     # save scores
     open("scores.json", "w").write(json.dumps(scores))
+
+    # press enter to continue
+    input("Press enter to continue...")
+
     return # return to menu
 
 class computer():
