@@ -3,6 +3,19 @@ import json
 import random
 import time
 
+# print the board, used for debugging before supporting tkinter
+def printBoard(board):
+    print("\n")
+    for i in range(3):
+        for j in range(3):
+            if j < 2:
+                print(board[i][j], end="| ")
+            else:
+                print(board[i][j], end=" ")
+        print()
+    print("\n")
+    return
+
 # given a 2d array, return the winner only if each square is filled with x or y
 def checkWinner(board):
     # check columns
@@ -198,7 +211,7 @@ def localGame():
         if isXTurn:
             print()
             print("X's turn")
-            print(board)
+            printBoard(board)
             while True:
                 x = int(input("Please enter a row: "))
                 y = int(input("Please enter a column: "))
@@ -210,7 +223,7 @@ def localGame():
         else:
             print()
             print("O's turn")
-            print(board)
+            printBoard(board)
             while True:
                 x = int(input("Please enter a row: "))
                 y = int(input("Please enter a column: "))
@@ -219,7 +232,7 @@ def localGame():
                 print("That square is already taken")
             board[x][y] = "o"
             isXTurn = True
-    print(board)
+    printBoard(board)
 
     # add scores
     if checkWinner(board) == "x":
@@ -297,7 +310,7 @@ class computer():
             if isPlayerTurn:
                 print()
                 print("Your turn")
-                print(self.board)
+                printBoard(self.board)
                 while True:
                     x = int(input("Please enter a row: "))
                     y = int(input("Please enter a column: "))
@@ -321,6 +334,7 @@ class computer():
             if checkTie(self.board):
                 break
         
+        printBoard(self.board)
         # print winner and print scores
         if checkWinner(self.board) == self.player:
             print("You win!")
