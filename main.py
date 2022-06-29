@@ -175,7 +175,6 @@ def findAdjacents(board, piece):
                     adjacents = adjacents.union(tempAdjacents)
     return adjacents
 
-
 # a local 1v1 game
 def localGame():
     print()
