@@ -1,7 +1,5 @@
 from main import getWinningMove
 
-print(getWinningMove([["x", "x", " "],[" ", " ", " "],[" ", " ", " "]], "x"))
-
 def test_getWinningMove():
     board = [[" ", " ", " "],[" ", " ", " "],[" ", " ", " "]]
     assert getWinningMove(board, "x") == [-1, -1]

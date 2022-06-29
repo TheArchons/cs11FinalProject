@@ -561,5 +561,3 @@ def main():
         else:
             print("Invalid choice", end="\n\n")
         choice = menu()
-
-main()
