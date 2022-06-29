@@ -2,6 +2,9 @@ import os
 import json
 import random
 import time
+import requests
+
+serverIP = "http://localhost:8080/"
 
 # print the board, used for debugging before supporting tkinter
 def printBoard(board):
@@ -510,6 +513,43 @@ class computer():
 # online game
 def remoteGame():
     print()
+    # get list of players
+    players = requests.get(serverIP + "players").text
+    # convert from json to list
+    players = json.loads(players)
+
+    # get player name
+    while True:
+        playerName = input("Enter your name: ")
+        if playerName not in players:
+            break
+        else:
+            useAnyways = input("Name already taken, use anyways? (y/n) ")
+            if useAnyways == "y":
+                break
+            else:
+                continue
+
+    # ask if they would like to join or start a game
+    print("Would you like to join or start a game?")
+    print("1. Join")
+    print("2. Start")
+    print("3. Back")
+    print()
+    joinOrStart = input("Choice: ")
+    
+    while joinOrStart not in ["1", "2", "3"]:
+        if joinOrStart == "1":
+            gameCode = input("please enter the game code: ")
+        elif joinOrStart == "2":
+            # send a request to the server to start a game
+            requests.post(serverIP + "/startGame", data={"playerName": playerName})
+        elif joinOrStart == "3":
+            return
+        else:
+            print("Invalid choice")
+        
+    
     return
 
 def scoreboard():
@@ -554,9 +594,11 @@ def main():
         elif choice == "2":
             localGame()
         elif choice == "3":
-            print(checkWinner([["x", "x", " "], [" ", "y", " "], [" ", " ", "x"]]))
+            remoteGame()
         elif choice == "4":
             scoreboard()
         else:
             print("Invalid choice", end="\n\n")
         choice = menu()
+
+main()
