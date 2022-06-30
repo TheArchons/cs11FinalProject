@@ -1,4 +1,11 @@
 import time
+
+# clear tkinter frame
+def clearFrame(frame):
+    for widget in frame.winfo_children():
+        widget.destroy()
+    return
+
 # print the board, used for debugging before supporting tkinter
 def printBoard(board):
     print("\n")
