@@ -6,7 +6,7 @@ import json
 import random
 
 hostName = "localhost"
-hostPort = 8080
+hostPort = 1337
 
 # create remoteScores.json file
 if not os.path.exists("remoteScores.json"):
