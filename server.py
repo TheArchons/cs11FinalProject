@@ -107,7 +107,14 @@ class server(BaseHTTPRequestHandler):
             # return the json file
             self.returnPayload(json_game)
             return
-                
+        
+        if self.path == "/scores":
+            # return a json list of scores
+            # convert to json
+            json_scores = json.dumps(self.scores)
+            # return the json file
+            self.returnPayload(json_scores)
+
     def do_POST(self):
         print("posting " + self.path)
         if self.path == "/startGame":

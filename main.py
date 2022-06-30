@@ -667,6 +667,9 @@ def remoteGame():
 
 def scoreboard():
     print()
+    # request the scores from the server
+    onlineScores = json.loads(requests.get(serverIP + "scores").text)
+    # get local scores
     scores = json.loads(open("scores.json", "r").read())
     print("Local scores:")
     for key in scores["local"]:
@@ -674,9 +677,10 @@ def scoreboard():
 
     print()
 
-    print("Remote scores:")
-    for key in scores["remote"]:
-        print(key + ": " + str(scores["remote"][key]))
+    print("Online scores:")
+    
+    for key in onlineScores:
+        print(key + ": " + str(onlineScores[key]))
     
     input("press enter to continue...")
     print()
@@ -696,7 +700,6 @@ def main():
     if not os.path.isfile("scores.json"):
         scores = {}
         scores["local"] = {"computer":0,}
-        scores["remote"] = {}
         with open("scores.json", "w") as f:
             json.dump(scores, f)
 
