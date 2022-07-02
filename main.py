@@ -103,14 +103,6 @@ def menu():
     # display
     display.root.mainloop()
 
-    """print("welcome to tic tac toe! PLease select an option:")
-    print("1. Play against a computer (I'm lonely)")
-    print("2. Play against a local player")
-    print("3. Play against a remote player")
-    print("4. Scoreboard")
-    print("5. Quit")
-    choice = input("Please enter your choice: ")"""
-
 def main():
     # create scores.json if it doesn't exist
     if not os.path.isfile("scores.json"):
