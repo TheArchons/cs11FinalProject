@@ -6,7 +6,7 @@ from computer import computer
 from local import localGame
 from remote import remoteGame
 import tkinter
-        
+
 
 # get server ip from serverIP.txt, this allows the server IP to be changed without changing multiple files
 with open("serverIP.txt", "r") as f:
@@ -56,11 +56,14 @@ def scoreboard():
         print(key + ": " + str(onlineScores[key]))
     
     # create a button to return to the menu
-    returnButton = tkinter.Button(display.root, text="Return to menu", command=menu, font=("Arial", 20), width=30)
+    menuVar = tkinter.IntVar()
+    returnButton = tkinter.Button(display.root, text="Return to menu", font=("Arial", 20), width=30, command=lambda: menuVar.set(1))
     returnButton.grid(row=rowOffset+len(onlineScores)+2, column=3, columnspan=6)
     print()
     print("Return to menu")
-    display()
+    # waits for the return button to be pressed (menuVar is updated when the button is pressed)
+    display.root.wait_variable(menuVar)
+    display.root.quit() # call main
 
 def menu():
     # clear frame
@@ -100,7 +103,6 @@ def menu():
     # display
     display.root.mainloop()
 
-
     """print("welcome to tic tac toe! PLease select an option:")
     print("1. Play against a computer (I'm lonely)")
     print("2. Play against a local player")
@@ -118,4 +120,5 @@ def main():
             json.dump(scores, f)
 
     # call menu
-    menu()
+    while True:
+        menu()
