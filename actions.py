@@ -1,4 +1,12 @@
 import time
+import tkinter
+class display:
+    root = tkinter.Tk()
+    root.title("Tic Tac Toe")
+    root.geometry("900x900")
+    root.resizable(False, False)
+    def __init__(self):
+        pass
 
 # clear tkinter frame
 def clearFrame(frame):

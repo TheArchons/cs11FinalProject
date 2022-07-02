@@ -6,14 +6,6 @@ from computer import computer
 from local import localGame
 from remote import remoteGame
 import tkinter
-
-class display:
-    root = tkinter.Tk()
-    root.title("Tic Tac Toe")
-    root.geometry("900x900")
-    root.resizable(False, False)
-    def __init__(self):
-        self.root.mainloop()
         
 
 # get server ip from serverIP.txt, this allows the server IP to be changed without changing multiple files
@@ -86,7 +78,7 @@ def menu():
     print("1. Play against a computer (I'm lonely)")
 
     # local is a button that calls localGame()
-    localButton = tkinter.Button(display.root, text="2. Play against a local player", command=localGame, font=("Arial", 20), width=30)
+    localButton = tkinter.Button(display.root, text="2. Play against a local player", command=localGame().main, font=("Arial", 20), width=30)
     localButton.grid(row=2, column=3, columnspan=6)
     print("2. Play against a local player")
 
