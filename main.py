@@ -1,11 +1,11 @@
-import os
-import json
-import requests
-from actions import *
-from computer import computer
-from local import localGame
-from remote import remoteGame
-import tkinter
+import os # usually to check if a file exists
+import json # storing and transferring scores
+import requests # connect to the server for playing remote games and score retrieval
+from actions import * # general actions for the game
+from computer import computer # game against computer
+from local import localGame # game with 2 local players
+from remote import remoteGame # game with 2 online players
+import tkinter # gui
 
 
 # get server ip from serverIP.txt, this allows the server IP to be changed without changing multiple files
@@ -68,17 +68,18 @@ def scoreboard():
 def menu():
     # clear frame
     clearFrame(display.root)
+
     # display menu with tkinter
     welcome = tkinter.Label(display.root, text="Welcome to Tic Tac Toe!", font=("Arial", 40), anchor="center", width=30)
     welcome.grid(row=0, column=3, columnspan=6)
     print("Welcome to Tic Tac Toe!")
-
     print("Please select an option:")
+
     # computer is a button that calls computer()
-    computerButton = tkinter.Button(display.root, text="1. Play against a computer (I'm lonely)", command=computer, font=("Arial", 20), width=30)
+    computerButton = tkinter.Button(display.root, text="1. Play against a computer", command=computer, font=("Arial", 20), width=30)
     # center the button
     computerButton.grid(row=1, column=3, columnspan=6)
-    print("1. Play against a computer (I'm lonely)")
+    print("1. Play against a computer")
 
     # local is a button that calls localGame()
     localButton = tkinter.Button(display.root, text="2. Play against a local player", command=localGame().main, font=("Arial", 20), width=30)

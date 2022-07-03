@@ -233,7 +233,7 @@ class localGame():
 
     def displayBoard(self):
         # rename frame title to "game"
-        display.root.title("game")
+        display.root.title("Game")
 
         # top text to show whose turn it is or who won
         topText = tkinter.StringVar()

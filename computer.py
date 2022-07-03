@@ -7,11 +7,45 @@ class computer():
     difficulty = ""
     player = ""
     computer = ""
+    continueVar = tkinter.IntVar()
+    display = display()
+    forbiddenNames = ["", "computer"]
+    scores = json.loads(open("scores.json", "r").read())
+    username = ""
+    playerTurn = False
+    gameOver = tkinter.IntVar()
 
     def __init__(self):
+        # clear frame
+        clearFrame(display.root)
+
         # setup the board
         self.board = setupBoard()
-        while True:
+
+        # get the difficulty
+        self.difficultyPopup()
+
+        # ask the player to choose a piece
+        self.pieceChoicePopup()
+
+        # get the player to enter their name
+        self.selectName()
+
+        # play the game
+        self.game()
+
+        # update scores
+        self.updateScores()
+
+        # wait for continueVar
+        self.display.root.wait_variable(self.continueVar)
+
+        # quit root
+        self.display.root.quit()
+
+        return
+
+        """while True:
             self.difficulty = input("Please enter the difficulty (easy/medium/hard): ")
             if self.difficulty in ["easy", "medium", "hard"]:
                 break
@@ -102,7 +136,319 @@ class computer():
         input("Press enter to return to menu")
         print()
 
-        return 
+        return"""
+
+    def computerController(self):
+        if self.difficulty == "easy":
+            row, column = self.computerEasy()
+        elif self.difficulty == "medium":
+            row, column = self.computerMedium()
+        else:
+            row, column = self.computerHard()
+        self.boardClick(row, column)
+
+    def updateButtons(self, command):
+            # disable all buttons
+            for row in range(3):
+                for column in range(3):
+                    self.display.root.grid_slaves(row=row+2, column=column)[0].config(command=command)
+
+    # enables all buttons that are not already taken
+    def enableEmpty(self):
+        for row in range(3):
+            for column in range(3):
+                if self.board[row][column] == " ":
+                    display.root.grid_slaves(row=row+2, column=column)[0].config(command=lambda: self.boardClick(row, column))
+
+    def boardClick(self, row, column):
+        # update board
+        if self.playerTurn:
+            self.board[row][column] = self.player
+            self.playerTurn = False
+            buttonText = self.player.upper()
+        else:
+            self.board[row][column] = self.computer
+            self.playerTurn = True
+            buttonText = self.computer.upper()
+
+        # disable button and update button text
+        self.display.root.grid_slaves(row=row+2, column=column)[0].config(text=buttonText, command=lambda: None)
+
+        # disable all buttons if it is the computer's turn and enable all buttons if it is the player's turn
+        if self.playerTurn:
+            self.enableEmpty()
+        else:
+            self.updateButtons(lambda: None)
+
+        # update top text
+        if self.playerTurn:
+            text = "Your turn"
+        else:
+            text = "Calculating..."
+        
+        # delete top text
+        self.display.root.grid_slaves(row=0, column=0)[0].destroy()
+        # create top text
+        self.topTextLabel = tkinter.Label(display.root, text=text, font=("Arial", 20), anchor="center")
+        self.topTextLabel.grid(row=0, column=0, columnspan=3)
+        self.display.root.update()
+
+        # check if game is over
+        winner = checkWinner(self.board)
+        if winner != "none":
+            if winner == "x": # set winner to the player corresponding to the piece
+                self.winner = self.players[0] # set winner to x
+                text = "You win!"
+            else:
+                self.winner = self.players[1] # set winner to o
+                text = "Computer wins!"
+
+            # update top text
+            self.display.root.grid_slaves(row=0, column=0)[0].config(text=text, font=("Arial", 20))
+
+            # disable all buttons
+            self.updateButtons(lambda: None)
+
+            # add a continue button
+            continueButton = tkinter.Button(self.display.root, text="Continue", font=("Arial", 20), command=lambda: self.continueVar.set(1))
+            continueButton.grid(row=3, column=10)
+
+            # update gameOver
+            self.gameOver.set(1)
+        
+        # else, check if game is a tie
+        elif checkTie(self.board):
+            # update winner
+            self.winner = "tie"
+
+            # update top text
+            self.display.root.grid_slaves(row=0, column=0)[0].config(text="Tie!", font=("Arial", 20))
+
+            # disable all buttons
+            self.updateButtons(lambda: None)
+
+            # add a continue button
+            continueButton = tkinter.Button(self.display.root, text="Continue", font=("Arial", 20), command=lambda: self.continueVar.set(1))
+            continueButton.grid(row=3, column=10)
+
+            # update gameOver
+            self.gameOver.set(1)
+
+        # call computer controller if it is the computer's turn
+        if not self.playerTurn:
+            self.computerController()
+
+    def displayBoard(self):
+        # rename frame title to game
+        display.root.title("Game")
+
+        # top text to show whose turn it is or who won
+        topText = tkinter.StringVar()
+        if self.playerTurn == True:
+            topText.set("Your turn")
+        else:
+            topText.set("Calculating...")
+        self.topTextLabel = tkinter.Label(display.root, textvariable=topText, font=("Arial", 20), anchor="center")
+        self.topTextLabel.grid(row=0, column=0, columnspan=3)
+
+        # 3x3 grid of buttons
+        for row in range(3):
+            for column in range(3):
+                # create button
+                button = tkinter.Button(display.root, text="", command=lambda row=row, column=column: self.boardClick(row, column), font=("Arial", 50), anchor="center", width=3, height=3)
+                button.grid(row=row+2, column=column)
+        
+        # wait for gameOver to update
+        self.display.root.wait_variable(self.continueVar)
+
+        return
+
+    def game(self):
+        print("game")
+
+        # display board
+        self.displayBoard()
+
+    # forbidden name popup
+    def forbiddenPopup(self):
+        # create popup
+        popup = tkinter.Toplevel(display.root)
+        popup.title("ERROR: Forbidden Name")
+        popup.geometry("300x300")
+        popup.resizable(False, False)
+        
+        # text saying name is taken or forbidden
+        text = tkinter.StringVar()
+        text.set("ERROR: Name is taken or forbidden. \n Please try a different name.")
+        textLabel = tkinter.Label(popup, textvariable=text)
+        textLabel.pack()
+
+        # continue button
+        continueButton = tkinter.Button(popup, text="Continue", command=lambda: popup.destroy())
+        continueButton.pack()
+
+        # wait for user to click continue button
+        popup.wait_window(continueButton)
+
+        return
+
+    # yes/no popup to use existing score
+    def useExistingScorePopup(self):
+        # create popup
+        popup = tkinter.Toplevel(display.root)
+        popup.title("Use Existing Score")
+        popup.geometry("300x300")
+        popup.resizable(False, False)
+
+        # text to ask if user wants to use existing score
+        text = tkinter.StringVar()
+        text.set("Name already taken, use existing score?")
+        textLabel = tkinter.Label(popup, textvariable=text)
+        textLabel.pack()
+
+        # yes button and no button
+        yesNoVar = tkinter.IntVar() # 0 for yes, 1 for no
+        yesButton = tkinter.Button(popup, text="Yes", command=lambda: yesNoVar.set(0))
+        yesButton.pack()
+        noButton = tkinter.Button(popup, text="No", command=lambda: yesNoVar.set(1))
+        noButton.pack()
+
+        # wait for user to click either button
+        popup.wait_variable(yesNoVar)
+        popup.destroy()
+
+        # close popup when either button is clicked
+        if yesNoVar.get() == 0:
+            return True
+        else:
+            return False
+
+    def selectUserPopup(self):
+        # create popup
+        popup = tkinter.Toplevel(display.root)
+        popup.title("Select User")
+        popup.geometry("300x300")
+        popup.resizable(False, False)
+
+        # text to ask if user wants to use existing score
+        text = tkinter.StringVar()
+        text.set("Enter your username")
+        textLabel = tkinter.Label(popup, textvariable=text)
+        textLabel.pack()
+
+        # entry box to enter name
+        name = tkinter.StringVar()
+        nameEntry = tkinter.Entry(popup, textvariable=name)
+        nameEntry.pack()
+
+        # submit button with wait
+        submitVar = tkinter.IntVar()
+        submitButton = tkinter.Button(popup, text="Submit", command=lambda: submitVar.set(1))
+        submitButton.pack()
+        
+        submitButton.wait_variable(submitVar)
+
+        # close popup when submit button is clicked
+        popup.destroy()
+        return name.get()
+
+    def selectName(self):
+        print("select name")
+        while True:
+            username = self.selectUserPopup()
+            if username in self.forbiddenNames:
+                self.forbiddenPopup() # popup if name is taken
+                continue
+            if username in self.scores["local"]:
+                useExisting = self.useExistingScorePopup() # popup if name in scores
+                if useExisting:
+                    break
+            else:
+                # add name to scores if it does not exist
+                self.scores["local"][username] = 0
+                with open("scores.json", "w") as f:
+                    json.dump(self.scores, f)
+                break
+        # set self.username
+        self.username = username
+
+    # create a popup to ask the user to pick a piece and set the computer's piece
+    def pieceChoicePopup(self):
+        # create popup
+        popup = tkinter.Toplevel(display.root)
+        popup.title("Select piece")
+        popup.geometry("300x300")
+
+        # create text that says "Select piece"
+        text = tkinter.Label(popup, text="Select piece", font=("Arial", 20))
+        text.pack()
+
+        # create buttons for x, o, and random and set the result to piece
+        piece = tkinter.StringVar()
+        x = tkinter.Button(popup, text="X", command=lambda: piece.set("x"))
+        o = tkinter.Button(popup, text="O", command=lambda: piece.set("o"))
+        randomPiece = tkinter.Button(popup, text="Random", command=lambda: piece.set("random"))
+        x.pack()
+        o.pack()
+        randomPiece.pack()
+
+        # wait for piece to be set
+        self.display.root.wait_variable(piece)
+
+        # set the computer's piece
+        if piece.get() == "x":
+            self.computer = "o"
+        elif piece.get() == "o":
+            self.computer = "x"
+        else:
+            self.computer = random.choice(['x', 'o'])
+            if self.computer == "x":
+                piece.set("o")
+            else:
+                piece.set("x")
+
+        self.player = piece.get()
+        
+        # update playerTurn
+        if self.player == "x":
+            self.playerTurn = True
+        else:
+            self.playerTurn = False
+
+        # close popup
+        popup.destroy()
+
+    def setdiff(self, difficulty):
+        self.difficulty = difficulty
+        self.continueVar.set(1)
+        return
+
+    # ask the user to pick easy, medium, or hard with tkinter
+    def difficultyPopup(self):
+        #create popup
+        popup = tkinter.Toplevel(display.root)
+        popup.title("Select difficulty")
+        popup.geometry("300x300")
+
+        # add text that says "Select difficulty"
+        text = tkinter.Label(popup, text="Select difficulty", font=("Arial", 20))
+        text.pack()
+        easy = tkinter.Button(popup, text="Easy", command=lambda: self.setdiff("easy"))
+        medium = tkinter.Button(popup, text="Medium", command=lambda: self.setdiff("medium"))
+        hard = tkinter.Button(popup, text="Hard", command=lambda: self.setdiff("hard"))
+        # add buttons for easy, medium, and hard
+        easy.pack()
+        medium.pack()
+        hard.pack()
+
+        # wait for continueVar
+        self.display.root.wait_variable(self.continueVar)
+
+        # reset continueVar
+        self.continueVar.set(0)
+
+        # close popup
+        popup.destroy()
 
     def placeRandom(self):
         # find all empty spaces
@@ -120,7 +466,7 @@ class computer():
 
         calculating()
 
-        return
+        return [randomSpace[0], randomSpace[1]]
 
     def placeAdjacent(self, piece):
         adjacents = findAdjacents(self.board, piece)
@@ -128,28 +474,28 @@ class computer():
         if (1, 1) in adjacents: # if the middle is open, place there
             self.board[1][1] = self.computer
             calculating()
-            return True
+            return True, [i[0], i[1]]
 
         for i in [(0, 0), (0, 2), (2, 0), (2, 2)]: # if it is in the corners, place there
             if i in adjacents:
                 self.board[i[0]][i[1]] = self.computer
                 calculating()
-                return True
+                return True, [i[0], i[1]]
         
         for i in [(0, 1), (1, 0), (1, 2), (2, 1)]: # if it is in the sides, place there
             if i in adjacents:
                 self.board[i[0]][i[1]] = self.computer
                 calculating()
-                return True
+                return True, [i[0], i[1]]
         
-        return False
+        return False, []
 
     def empties(self):
         # check if the center is empty
         if self.board[1][1] == " ":
             self.board[1][1] = self.computer
             calculating()
-            return
+            return [1, 1]
         
         # check if the corners are empty
         corners = [
@@ -163,7 +509,7 @@ class computer():
             if self.board[key[0]][key[1]] == " ":
                 self.board[key[0]][key[1]] = self.computer
                 calculating()
-                return
+                return [key[0], key[1]]
         
         # check if the sides are empty
         sides = [
@@ -177,33 +523,35 @@ class computer():
             if self.board[key[0]][key[1]] == " ":
                 self.board[key[0]][key[1]] = self.computer
                 calculating()
-                return
+                return [key[0], key[1]]
 
     def winningMove(self, piece):
         winningMove = getWinningMove(self.board, piece)
         if winningMove != [-1, -1]:
             self.board[winningMove[0]][winningMove[1]] = self.computer
             calculating()
-            return True
+            return True, winningMove
         
-        return False
+        return False, []
 
     def computerEasy(self):
         # this ai will just pick a random spot
         # note: should be relatively easy to win, as long as you don't get unlucky
-        self.placeRandom()
+        return self.placeRandom()
 
     def computerMedium(self):
         # this ai will win, block the player's win, or place a random piece
         # note: to beat this ai, the player must fork
-        if self.winningMove(self.computer):
-            return
+        winning = self.winningMove(self.computer)
+        if winning[0]:
+            return winning[1]
 
-        if self.winningMove(self.player):
-            return
+        winning = self.winningMove(self.player)
+        if winning[0]:
+            return winning[1]
 
         # if there is no winning move, place a random piece
-        self.placeRandom()
+        return self.placeRandom()
         
     def computerHard(self):
         # this ai will check in the following order:
@@ -231,20 +579,24 @@ class computer():
         # note: I believe the ai will never lose
 
         # check if the computer can win
-        if self.winningMove(self.computer):
-            return
+        winning = self.winningMove(self.computer)
+        if winning[0]:
+            return winning[1]
         
         # check if the player can win
-        if self.winningMove(self.player):
-            return
+        winning = self.winningMove(self.player)
+        if winning[0]:
+            return winning[1]
         
         # check if the computer can place adjacent to one of the computer's pieces
-        if self.placeAdjacent(self.computer) == True:
-            return
+        adjacent = self.placeAdjacent(self.computer)[0]
+        if adjacent[0]:
+            return adjacent[1]
         
         # check if the computer can place adjacent to one of the player's pieces
-        if self.placeAdjacent(self.player) == True:
-            return
+        adjacent = self.placeAdjacent(self.player)[0]
+        if adjacent[0]:
+            return adjacent[1]
         
         # check for empty locations
-        self.empties()
+        return self.empties()

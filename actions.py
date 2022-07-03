@@ -1,5 +1,6 @@
 import time
 import tkinter
+
 class display:
     root = tkinter.Tk()
     root.title("Tic Tac Toe")

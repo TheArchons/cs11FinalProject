@@ -5,7 +5,7 @@ import os
 import json
 import random
 
-hostName = "localhost"
+hostName = "192.168.0.121"
 hostPort = 1337
 
 # create remoteScores.json file
