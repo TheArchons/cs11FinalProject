@@ -14,6 +14,8 @@ class computer():
     username = ""
     playerTurn = False
     gameOver = tkinter.IntVar()
+    topText = None
+    winner = None
 
     def __init__(self):
         # clear frame
@@ -138,117 +140,101 @@ class computer():
 
         return"""
 
-    def computerController(self):
-        if self.difficulty == "easy":
-            row, column = self.computerEasy()
-        elif self.difficulty == "medium":
-            row, column = self.computerMedium()
-        else:
-            row, column = self.computerHard()
-        self.boardClick(row, column)
+    def disableButtons(self):
+        for i in range(3):
+            for j in range(3):
+                display.root.grid_slaves(row=i+2, column=j)[0].config(state="disabled")
+        return
 
-    def updateButtons(self, command):
-            # disable all buttons
-            for row in range(3):
-                for column in range(3):
-                    self.display.root.grid_slaves(row=row+2, column=column)[0].config(command=command)
+    # enable empty buttons
+    def enableButtons(self):
+        for i in range(3):
+            for j in range(3):
+                if self.board[i][j] == " ":
+                    display.root.grid_slaves(row=i+2, column=j)[0].config(state="normal")
+        return
 
-    # enables all buttons that are not already taken
-    def enableEmpty(self):
-        for row in range(3):
-            for column in range(3):
-                if self.board[row][column] == " ":
-                    display.root.grid_slaves(row=row+2, column=column)[0].config(command=lambda: self.boardClick(row, column))
+    def winCheck(self):
+        winner = checkWinner(self.board)
+        if winner != 'none': # if there is a winner
+            if winner == self.computer:
+                self.winner = "computer"
+            else:
+                self.winner = "player"
+            self.gameOver.set(1)
+            return True
+
+        elif checkTie(self.board): # if there is a tie
+            self.winner = "tie"
+            self.gameOver.set(1)
+            return True
+
+        return False # no tie or winner
+
+    def disableButton(self, row, column):
+        display.root.grid_slaves(row=row)[column].config(state="disabled")
+        return
 
     def boardClick(self, row, column):
+        # disable button at row, column
+        self.disableButton(row+2, column)
+
         # update board
-        if self.playerTurn:
-            self.board[row][column] = self.player
-            self.playerTurn = False
-            buttonText = self.player.upper()
-        else:
-            self.board[row][column] = self.computer
-            self.playerTurn = True
-            buttonText = self.computer.upper()
+        self.board[row][column] = self.player
 
-        # disable button and update button text
-        self.display.root.grid_slaves(row=row+2, column=column)[0].config(text=buttonText, command=lambda: None)
-
-        # disable all buttons if it is the computer's turn and enable all buttons if it is the player's turn
-        if self.playerTurn:
-            self.enableEmpty()
-        else:
-            self.updateButtons(lambda: None)
-
-        # update top text
-        if self.playerTurn:
-            text = "Your turn"
-        else:
-            text = "Calculating..."
+        # update text of the button
+        display.root.grid_slaves(row=row+2, column=column)[0].config(text=self.player)
         
-        # delete top text
-        self.display.root.grid_slaves(row=0, column=0)[0].destroy()
-        # create top text
-        self.topTextLabel = tkinter.Label(display.root, text=text, font=("Arial", 20), anchor="center")
-        self.topTextLabel.grid(row=0, column=0, columnspan=3)
+        # check if player won. If not, call computer turn
+        if not self.winCheck():
+            self.computerTurn()
+
+    def computerTurn(self):
+        # disable all buttons
+        self.disableButtons()
+
+        # set top text to "Calculating..."
+        self.topText.set("Calculating...")
+        # show
         self.display.root.update()
+        # wait for 1 second
+        time.sleep(1)
 
-        # check if game is over
-        winner = checkWinner(self.board)
-        if winner != "none":
-            if winner == "x": # set winner to the player corresponding to the piece
-                self.winner = self.players[0] # set winner to x
-                text = "You win!"
-            else:
-                self.winner = self.players[1] # set winner to o
-                text = "Computer wins!"
-
-            # update top text
-            self.display.root.grid_slaves(row=0, column=0)[0].config(text=text, font=("Arial", 20))
-
-            # disable all buttons
-            self.updateButtons(lambda: None)
-
-            # add a continue button
-            continueButton = tkinter.Button(self.display.root, text="Continue", font=("Arial", 20), command=lambda: self.continueVar.set(1))
-            continueButton.grid(row=3, column=10)
-
-            # update gameOver
-            self.gameOver.set(1)
+        # get computer move
+        row, col = 0, 0
+        if self.difficulty == "easy":
+            row, col = self.computerEasy()
+        elif self.difficulty == "medium":
+            row, col = self.computerMedium()
+        else:
+            row, col = self.computerHard()
         
-        # else, check if game is a tie
-        elif checkTie(self.board):
-            # update winner
-            self.winner = "tie"
+        # update board text at row, col
+        boardText = tkinter.StringVar()
+        if self.computer == "x":
+            boardText.set("X")
+        else:
+            boardText.set("O")
+        
+        self.display.root.grid_slaves(row=row+2, column=col)[0].config(textvariable=boardText)
 
-            # update top text
-            self.display.root.grid_slaves(row=0, column=0)[0].config(text="Tie!", font=("Arial", 20))
+        # set top text to "Your turn"
+        self.topText.set("Your turn")
 
-            # disable all buttons
-            self.updateButtons(lambda: None)
+        # if not game over, enable buttons
+        if not self.winCheck():
+            self.enableButtons()
 
-            # add a continue button
-            continueButton = tkinter.Button(self.display.root, text="Continue", font=("Arial", 20), command=lambda: self.continueVar.set(1))
-            continueButton.grid(row=3, column=10)
-
-            # update gameOver
-            self.gameOver.set(1)
-
-        # call computer controller if it is the computer's turn
-        if not self.playerTurn:
-            self.computerController()
+        return
 
     def displayBoard(self):
         # rename frame title to game
         display.root.title("Game")
 
         # top text to show whose turn it is or who won
-        topText = tkinter.StringVar()
-        if self.playerTurn == True:
-            topText.set("Your turn")
-        else:
-            topText.set("Calculating...")
-        self.topTextLabel = tkinter.Label(display.root, textvariable=topText, font=("Arial", 20), anchor="center")
+        self.topText = tkinter.StringVar()
+        self.topText.set("Your turn")
+        self.topTextLabel = tkinter.Label(display.root, textvariable=self.topText, font=("Arial", 20), anchor="center")
         self.topTextLabel.grid(row=0, column=0, columnspan=3)
 
         # 3x3 grid of buttons
@@ -258,8 +244,11 @@ class computer():
                 button = tkinter.Button(display.root, text="", command=lambda row=row, column=column: self.boardClick(row, column), font=("Arial", 50), anchor="center", width=3, height=3)
                 button.grid(row=row+2, column=column)
         
+        if not self.playerTurn: # if it's the computer's turn, call computerTurn() first
+            self.computerTurn()
+
         # wait for gameOver to update
-        self.display.root.wait_variable(self.continueVar)
+        self.display.root.wait_variable(self.gameOver)
 
         return
 
@@ -268,6 +257,7 @@ class computer():
 
         # display board
         self.displayBoard()
+        return
 
     # forbidden name popup
     def forbiddenPopup(self):
@@ -589,12 +579,12 @@ class computer():
             return winning[1]
         
         # check if the computer can place adjacent to one of the computer's pieces
-        adjacent = self.placeAdjacent(self.computer)[0]
+        adjacent = self.placeAdjacent(self.computer)
         if adjacent[0]:
             return adjacent[1]
         
         # check if the computer can place adjacent to one of the player's pieces
-        adjacent = self.placeAdjacent(self.player)[0]
+        adjacent = self.placeAdjacent(self.player)
         if adjacent[0]:
             return adjacent[1]
         

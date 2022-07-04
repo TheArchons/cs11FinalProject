@@ -65,7 +65,7 @@ def calculating():
     # fake calculating
     # note: I added a bit of delay to make it seem like the computer is thinking
     print("calculating...")
-    time.sleep(1)
+    time.sleep(0.5)
     return
 
 # setup a tic tac toe board as a 2d array
