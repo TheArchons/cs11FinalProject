@@ -36,8 +36,8 @@ class computer():
         # play the game
         self.game()
 
-        # update scores
-        self.updateScores()
+        # continue screen
+        self.continueScreen()
 
         # wait for continueVar
         self.display.root.wait_variable(self.continueVar)
@@ -139,6 +139,45 @@ class computer():
         print()
 
         return"""
+
+    def updateScores(self): # calls when continue button is pressed
+        # update scores
+        if self.winner == "computer":
+            self.scores["local"]["computer"] += 1
+        else:
+            self.scores["local"][self.username] += 1
+        
+        # update scores in file
+        with open("scores.json", "w") as f:
+            json.dump(self.scores, f)
+        
+        # display scores on the right
+        # set scores to the string of text we want to display
+        scores = "{}'s score: {}\n{}'s score: {}".format(self.username, self.scores["local"][self.username], "Computer", self.scores["local"]["computer"])
+
+        # display scores
+        scoresLabel = tkinter.Label(self.display.root, text=scores, font=("Arial", 20))
+        scoresLabel.grid(row=3, column=4)
+
+    def continueScreen(self):
+        # update top text to show winner
+        if self.winner == "player":
+            self.topText.set("You win!")
+        elif self.winner == "computer":
+            self.topText.set("Computer wins!")
+        elif self.winner == "tie":
+            self.topText.set("Tie!")
+        
+        # disable buttons (all buttons should already be disabled, but just in case)
+        self.disableButtons()
+
+        # update scores
+        self.updateScores()
+
+        # add a continue button
+        continueButton = tkinter.Button(self.display.root, text="Continue", command=lambda: self.continueVar.set(1), font=("Arial", 20))
+        continueButton.grid(row=3, column=5)
+        return
 
     def disableButtons(self):
         for i in range(3):
@@ -257,6 +296,9 @@ class computer():
 
         # display board
         self.displayBoard()
+
+        # continueScreen
+        self.continueScreen()
         return
 
     # forbidden name popup
