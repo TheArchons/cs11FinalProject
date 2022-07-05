@@ -87,7 +87,7 @@ def menu():
     print("2. Play against a local player")
 
     # remote is a button that calls remoteGame()
-    remoteButton = tkinter.Button(display.root, text="3. Play against a remote player", command=remoteGame, font=("Arial", 20), width=30)
+    remoteButton = tkinter.Button(display.root, text="3. Play against a remote player", command=remoteGame().main, font=("Arial", 20), width=30)
     remoteButton.grid(row=3, column=3, columnspan=6)
     print("3. Play against a remote player")
 

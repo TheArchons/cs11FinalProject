@@ -6,8 +6,150 @@ from actions import *
 with open("serverIP.txt", "r") as f:
     serverIP = f.read()
 
+class remoteGame():
+    playerList = json.loads(requests.get(serverIP + "players").text)
+    AmHost = False
+    hostName = ""
+    username = ""
+    opponentName = ""
+    opponentPiece = ""
+    yourPiece = ""
+    game = None
+    continueVar = tkinter.IntVar()
+    display = display()
+    forbiddenNames = [""]
+
+    def main(self):
+        # clear frame
+        clearFrame(display.root)
+
+        # get player name
+        self.getPlayerName()
+
+        # join or start
+        self.joinOrStart()
+
+        if self.AmHost == True:
+            # host game
+            self.hostGame()
+        else:
+            # join game
+            self.joinGame()
+        
+        # game
+        self.game()
+
+        # update scores
+        self.updateScores()
+
+        # wait for continue button
+        display.root.wait_variable(self.continueVar)
+
+        # return to menu
+        display.root.quit()
+
+        return
+
+    # forbidden name popup
+    def forbiddenPopup(self):
+        # create popup
+        popup = tkinter.Toplevel(display.root)
+        popup.title("ERROR: Forbidden Name")
+        popup.geometry("300x300")
+        popup.resizable(False, False)
+        
+        # text saying name is taken or forbidden
+        text = tkinter.StringVar()
+        text.set("ERROR: Name is taken or forbidden. \n Please try a different name.")
+        textLabel = tkinter.Label(popup, textvariable=text)
+        textLabel.pack()
+
+        # continue button
+        continueButton = tkinter.Button(popup, text="Continue", command=lambda: popup.destroy())
+        continueButton.pack()
+
+        # wait for user to click continue button
+        popup.wait_window(continueButton)
+
+        return
+
+    # yes/no popup to use existing score
+    def useExistingScorePopup(self):
+        # create popup
+        popup = tkinter.Toplevel(display.root)
+        popup.title("Use Existing Score")
+        popup.geometry("300x300")
+        popup.resizable(False, False)
+
+        # text to ask if user wants to use existing score
+        text = tkinter.StringVar()
+        text.set("Name already taken, use existing score?")
+        textLabel = tkinter.Label(popup, textvariable=text)
+        textLabel.pack()
+
+        # yes button and no button
+        yesNoVar = tkinter.IntVar() # 0 for yes, 1 for no
+        yesButton = tkinter.Button(popup, text="Yes", command=lambda: yesNoVar.set(0))
+        yesButton.pack()
+        noButton = tkinter.Button(popup, text="No", command=lambda: yesNoVar.set(1))
+        noButton.pack()
+
+        # wait for user to click either button
+        popup.wait_variable(yesNoVar)
+        popup.destroy()
+
+        # close popup when either button is clicked
+        if yesNoVar.get() == 0:
+            return True
+        else:
+            return False
+
+    def namePopup(self):
+        # tkinter popup to get player name
+        popup = tkinter.Toplevel(display.root)
+        popup.title("Enter your name")
+        popup.geometry("600x300")
+        popup.resizable(False, False)
+
+        # create a label and entry for the player name
+        nameLabel = tkinter.Label(popup, text="Enter your name:", font=("Arial", 20), anchor="center", width=30)
+        nameLabel.grid(row=0, column=0, columnspan=2)
+        nameEntry = tkinter.Entry(popup, font=("Arial", 20), width=30)
+        nameEntry.grid(row=1, column=0, columnspan=2)
+
+        # submit button
+        submitVar = tkinter.IntVar()
+        submitButton = tkinter.Button(popup, text="Submit", font=("Arial", 20), width=30, command=lambda: submitVar.set(1))
+        submitButton.grid(row=2, column=0, columnspan=2)
+
+        # wait for submit button to be pressed
+        display.root.wait_variable(submitVar)
+
+        self.username = nameEntry.get()
+
+        # close popup when submit button is pressed
+        popup.destroy()
+        return self.username
+
+    def getPlayerName(self):
+        while True:
+            # get player's name
+            username = self.namePopup()
+
+            # check if the name is forbidden
+            if username in self.forbiddenNames:
+                self.forbiddenPopup()
+                continue
+            elif username in self.playerList:
+                useExisting = self.useExistingScorePopup() # popup if name in scores
+                if useExisting:
+                    break
+            else: # name is not in scores, quit
+                break
+
+
 # online game
-def remoteGame():
+"""def remoteGame():
     print()
     # get list of players
     players = requests.get(serverIP + "players").text
@@ -159,4 +301,4 @@ def remoteGame():
         # send the confirmDelete request to the server
         requests.post(serverIP + "confirmDelete/" + hostName)
 
-    return
+    return"""
