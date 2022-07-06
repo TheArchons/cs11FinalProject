@@ -1,6 +1,7 @@
 import requests
 import json
 from actions import *
+# import asyncio
 
 # get server ip from serverIP.txt
 with open("serverIP.txt", "r") as f:
@@ -18,6 +19,7 @@ class remoteGame():
     continueVar = tkinter.IntVar()
     display = display()
     forbiddenNames = [""]
+    opponentAction = tkinter.IntVar()
 
     def main(self):
         # clear frame
@@ -31,7 +33,10 @@ class remoteGame():
 
         if self.AmHost == True:
             # host game
-            self.hostGame()
+            shouldQuit = self.hostGame()
+            if shouldQuit == -1:
+                display.root.quit()
+                return
         else:
             # join game
             self.joinGame()
@@ -49,6 +54,149 @@ class remoteGame():
         display.root.quit()
 
         return
+    
+    # async function to get opponent
+    async def getOpponent(self):
+        while True:
+            # get current game
+            players = requests.get(serverIP + "games/" + self.username)
+
+            # if the opponent has joined, break
+            # if response is 200, then the opponent has joined
+            if players.status_code == 200:
+                # update opponent name
+                players = json.loads(players.text)
+                self.opponentName = players["opponent"]
+
+                # update your piece
+                self.yourPiece = players["hostPiece"]
+
+                # update opponent piece
+                if self.yourPiece == "x":
+                    self.opponentPiece = "o"
+                else:
+                    self.opponentPiece = "x"
+                
+                # update self.opponentAction
+                self.opponentAction.set(2)
+
+    # waiting for opponent
+    def waitingForOpponent(self):
+        # create popup
+        popup = tkinter.Toplevel(display.root)
+        popup.title("Waiting for Opponent")
+        popup.geometry("300x300")
+        popup.resizable(False, False)
+
+        # add text to popup
+        text = tkinter.StringVar()
+        text.set("Waiting for opponent to join...")
+        textLabel = tkinter.Label(popup, textvariable=text)
+
+        # add a return to menu button
+        returnButton = tkinter.Button(popup, text="Return to Menu", command=lambda: self.opponentAction.set(1))
+
+        # add text and button to popup
+        textLabel.pack()
+        returnButton.pack()
+        
+        # call getOpponent function
+        self.getOpponent()
+
+        # wait for opponent to join
+        display.root.wait_variable(self.opponentAction)
+
+        # destroy popup
+        popup.destroy()
+
+        # if opponentAction is 1, return to menu (return button pressed)
+        if self.opponentAction.get() == 1:
+            return -1
+        # if opponentAction is 2, opponent has joined
+        else:
+            return
+
+    # host game
+    def hostGame(self):
+        self.hostName = self.username
+
+        # send a request to the server to host a game
+        PostRequest = requests.post(serverIP + "startGame", data={"playerName": self.username})
+        if PostRequest.status_code == 400:
+            self.otherHost()
+            return -1
+        
+        # waiting for opponent
+        return self.waitingForOpponent()
+        
+
+        """            
+            hostName = playerName
+            amHost = True
+            # send a request to the server to start a game
+            PostRequest = requests.post(serverIP + "startGame", data={"playerName": playerName})
+            if PostRequest.status_code == 400:
+                print("Someone else is already hosting a game with this username.")
+                joinOrStart = "-1"
+                continue
+            print("Waiting for opponent...")
+            # wait for the opponent to join
+            seconds = 0
+            while True:
+                time.sleep(1)
+                seconds += 1
+                if seconds == 30: # ask if they want to return to the menu every 30 seconds
+                    continueSearching = input("Continue searching for opponent? (y/n) ")
+                    if continueSearching == "y":
+                        seconds = 0
+                        continue
+                    else:
+                        print("Exiting...")
+                        return
+                players = requests.get(serverIP + "games/" + playerName)
+                # if the opponent has joined, break
+                # if response is 200, then the opponent has joined
+                if players.status_code == 200:
+                    # convert from json to dictionary
+                    players = json.loads(players.text)
+                    break
+            # opponent has joined, get their name
+            opponentName = players["opponent"]
+            # start the game
+            print("Opponent found!")
+            print("Starting game...")
+            print()"""
+
+    # popup to ask if user wants to host or join a game
+    def joinOrStart(self):
+        # create popup
+        popup = tkinter.Toplevel(display.root)
+        popup.title("Join or Start a Game")
+        popup.geometry("300x300")
+        popup.resizable(False, False)
+
+        # text to ask if user wants to host or join a game
+        text = tkinter.StringVar()
+        text.set("Join or Start a Game?")
+        textLabel = tkinter.Label(popup, textvariable=text)
+        textLabel.pack()
+
+        # wait for update variable
+        joinOrStartVar = tkinter.IntVar()
+        joinButton = tkinter.Button(popup, text="Join", command=lambda: joinOrStartVar.set(0))
+        joinButton.pack()
+        startButton = tkinter.Button(popup, text="Start", command=lambda: joinOrStartVar.set(1))
+        startButton.pack()
+
+        # wait for user to click either button
+        popup.wait_variable(joinOrStartVar)
+        popup.destroy()
+
+        # update AmHost variable
+        if joinOrStartVar.get() == 0:
+            self.AmHost = False
+        else:
+            self.AmHost = True
 
     # forbidden name popup
     def forbiddenPopup(self):
