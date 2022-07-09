@@ -212,14 +212,6 @@ class server(BaseHTTPRequestHandler):
                 self.send_response(400)
                 self.end_headers()
                 return
-            
-            # check if the host is not the new player
-            username = self.rfile.read(int(self.headers['Content-Length'])).decode("utf-8").split("=")[1]
-            if hostName == username:
-                # host is the new player
-                self.send_response(401)
-                self.end_headers()
-                return
 
             # set the new player's opponent
             self.games[hostName]["opponent"] = username

@@ -55,6 +55,49 @@ class remoteGame():
 
         return
     
+    # no game popup
+    def noGame(self):
+        # create popup
+        popup = tkinter.Toplevel(display.root)
+        popup.title("No Game")
+        popup.geometry("300x300")
+        popup.resizable(False, False)
+
+        # display error message
+        text = tkinter.StringVar()
+        text.set("No game found with that name.")
+        textLabel = tkinter.Label(popup, textvariable=text)
+        textLabel.pack()
+
+        # add a try again button
+        tryAgainButton = tkinter.Button(popup, text="Try Again", command=lambda: popup.destroy())
+        tryAgainButton.pack()
+
+        # wait for user to click try again button
+        popup.wait_window(tryAgainButton)
+
+        return
+
+    # join remote game
+    def joinGame(self):
+        # get the opponent's name
+        while True:
+            hostName = self.namePopup("Enter the host's name")
+            if hostName in self.forbiddenNames:
+                self.forbiddenPopup()
+                continue
+            # check if the game exists
+            players = requests.post(serverIP + "join/" + hostName, data={"name": self.username})
+            # if joining was successful
+            if players.status_code == 200:
+                # update opponent name
+                self.opponentName = hostName
+                break
+            else:
+                # popup error message
+                self.noGame()
+                continue
+
     # async function to get opponent
     async def getOpponent(self):
         while True:
@@ -252,15 +295,15 @@ class remoteGame():
         else:
             return False
 
-    def namePopup(self):
+    def namePopup(self, title):
         # tkinter popup to get player name
         popup = tkinter.Toplevel(display.root)
-        popup.title("Enter your name")
+        popup.title(title)
         popup.geometry("600x300")
         popup.resizable(False, False)
 
         # create a label and entry for the player name
-        nameLabel = tkinter.Label(popup, text="Enter your name:", font=("Arial", 20), anchor="center", width=30)
+        nameLabel = tkinter.Label(popup, text=title, font=("Arial", 20), anchor="center", width=30)
         nameLabel.grid(row=0, column=0, columnspan=2)
         nameEntry = tkinter.Entry(popup, font=("Arial", 20), width=30)
         nameEntry.grid(row=1, column=0, columnspan=2)
@@ -273,16 +316,16 @@ class remoteGame():
         # wait for submit button to be pressed
         display.root.wait_variable(submitVar)
 
-        self.username = nameEntry.get()
+        username = nameEntry.get()
 
         # close popup when submit button is pressed
         popup.destroy()
-        return self.username
+        return username
 
     def getPlayerName(self):
         while True:
             # get player's name
-            username = self.namePopup()
+            username = self.namePopup("Enter your name")
 
             # check if the name is forbidden
             if username in self.forbiddenNames:
@@ -294,6 +337,12 @@ class remoteGame():
                     break
             else: # name is not in scores, quit
                 break
+        
+        # add to forbidden names
+        self.forbiddenNames.append(username)
+
+        # add to self.username
+        self.username = username
 
 
 # online game
