@@ -154,6 +154,8 @@ class remoteGame():
 
         # if opponentAction is 1, return to menu (return button pressed)
         if self.opponentAction.get() == 1:
+            # close the game if returning to menu
+            requests.post(serverIP + "closeGame/" + self.username)
             return -1
         # if opponentAction is 2, opponent has joined
         else:
@@ -166,7 +168,7 @@ class remoteGame():
         # send a request to the server to host a game
         PostRequest = requests.post(serverIP + "startGame", data={"playerName": self.username})
         if PostRequest.status_code == 400:
-            self.otherHost()
+            self.forbiddenPopup()
             return -1
         
         # waiting for opponent

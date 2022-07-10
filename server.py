@@ -5,7 +5,8 @@ import os
 import json
 import random
 
-hostName = "192.168.0.121"
+#hostName = "192.168.0.121"
+hostName = "0.0.0.0"
 hostPort = 1337
 
 # create remoteScores.json file
@@ -242,6 +243,16 @@ class server(BaseHTTPRequestHandler):
                 # update the game
                 self.games[username] = game
             # return code 200
+            self.send_response(200)
+            self.end_headers()
+    
+        if self.path.startswith("/closeGame/"):
+            # get the username
+            username = self.path.split("/")[2]
+            # get the game
+            game = self.games[username]
+            # delete the game
+            del self.games[username]
             self.send_response(200)
             self.end_headers()
 
