@@ -61,6 +61,10 @@ class remoteGame():
 
         return
 
+    def updateScores(self):
+        # TODO
+        return
+
     def disableButton(self, row, column):
         display.root.grid_slaves(row=row)[column].config(state="disabled")
         return
@@ -101,6 +105,8 @@ class remoteGame():
 
             # if the game is over, return
             if self.game["isOver"] == True:
+                self.updateBoard()
+                self.display.root.update()
                 self.gameOver.set(1)
                 return
 
@@ -133,6 +139,8 @@ class remoteGame():
 
         # if the game is over, return
         if self.game["isOver"] == True:
+            self.updateBoard()
+            self.display.root.update()
             self.gameOver.set(1)
             return
 
