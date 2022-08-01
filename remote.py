@@ -62,7 +62,32 @@ class remoteGame():
         return
 
     def updateScores(self):
-        # TODO
+        self.game = json.loads(requests.get(serverIP + "games/" + self.hostName).text) # update game
+        # disable all buttons
+        self.disableAllButtons()
+
+        # update top text to winner
+        if self.game["winner"] == None:
+            self.topText.set("Tie!")
+        elif self.game["winner"] == self.yourPiece:
+            self.topText.set("You won!")
+        else:
+            self.topText.set("You lost!")
+        
+        # show scores
+        scoreBoard = requests.get(serverIP + "scores").text
+        scoreBoard = json.loads(scoreBoard)
+        scores = "Your score: " + str(scoreBoard[self.username]) + "\n" + self.opponentName + "'s score: " + str(scoreBoard[self.opponentName])
+        scoresLabel = tkinter.Label(self.display.root, text=scores, font=("Arial", 20))
+        scoresLabel.grid(row=3, column=4)
+
+        # show continue button
+        continueButton = tkinter.Button(self.display.root, text="Continue", font=("Arial", 30), command=lambda: self.continueVar.set(1))
+        continueButton.grid(row=3, column=5)
+
+        # send delete request to server
+        requests.post(serverIP + "confirmDelete/" + self.hostName)
+
         return
 
     def disableButton(self, row, column):
@@ -234,7 +259,7 @@ class remoteGame():
                 self.forbiddenPopup()
                 continue
             # check if the game exists
-            players = requests.post(serverIP + "join/" + hostName, data={"name": self.username})
+            players = requests.post(serverIP + "join/" + hostName, data=json.dumps({"name": self.username}))
             # if joining was successful
             if players.status_code == 200:
                 # get the current game
@@ -256,7 +281,7 @@ class remoteGame():
                 self.noGame()
                 continue
 
-    # async function to get opponent
+    #function to get opponent
     def getOpponent(self):
         while True:
             # get current game
@@ -280,6 +305,8 @@ class remoteGame():
                 
                 # update self.opponentAction
                 self.opponentAction.set(2)
+
+                return
 
     # waiting for opponent
     def waitingForOpponent(self):
@@ -324,7 +351,7 @@ class remoteGame():
         self.hostName = self.username
 
         # send a request to the server to host a game
-        PostRequest = requests.post(serverIP + "startGame", data={"playerName": self.username})
+        PostRequest = requests.post(serverIP + "startGame", data=json.dumps({"playerName": self.username}))
         if PostRequest.status_code == 400:
             self.forbiddenPopup()
             return -1

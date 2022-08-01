@@ -105,4 +105,5 @@ def menu():
     display.root.mainloop()
 
 def main():
-    menu()
+    while True:
+        menu()

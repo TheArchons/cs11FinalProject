@@ -4,9 +4,10 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 import os
 import json
 import random
+import urllib.parse
 
-hostName = "192.168.0.121"
-#hostName = "0.0.0.0"
+#hostName = "192.168.0.121" # for local testing
+hostName = "0.0.0.0" # for deployment
 hostPort = 1337
 
 # create remoteScores.json file
@@ -98,7 +99,7 @@ class server(BaseHTTPRequestHandler):
         
         if self.path.startswith("/games/"):
             # get the username
-            username = self.path.split("/")[2]
+            username = urllib.parse.unquote(self.path.split("/")[2])
             print(self.games, username)
             if username not in self.games:
                 # user is not in a game
@@ -130,7 +131,7 @@ class server(BaseHTTPRequestHandler):
         if self.path == "/startGame":
             # start a new game
             # get username with decode
-            username = self.rfile.read(int(self.headers['Content-Length'])).decode("utf-8").split("=")[1]
+            username = json.loads(self.rfile.read(int(self.headers['Content-Length'])).decode("utf-8"))["playerName"]
             print("username:", username)
             # if user is already in a game
             if username in self.games:
@@ -159,7 +160,7 @@ class server(BaseHTTPRequestHandler):
         
         if self.path.startswith("/move/"): # if the path is /move/username
             # get the username
-            username = self.path.split("/")[2]
+            username = urllib.parse.unquote(self.path.split("/")[2])
             # get the game
             game = self.games[username]
             # get the move
@@ -214,7 +215,7 @@ class server(BaseHTTPRequestHandler):
         
         if self.path.startswith("/join/"):
             # get the host's name
-            hostName = self.path.split("/")[2]
+            hostName = urllib.parse.unquote(self.path.split("/")[2])
 
             # check if the game exists, does not have an opponent
             if hostName not in self.games or self.games[hostName]["opponent"] is not None:
@@ -224,7 +225,7 @@ class server(BaseHTTPRequestHandler):
                 return
 
             # get the username
-            username = self.rfile.read(int(self.headers['Content-Length'])).decode("utf-8").split("=")[1]
+            username = json.loads(self.rfile.read(int(self.headers['Content-Length'])).decode("utf-8"))["name"]
 
             # set the new player's opponent
             self.games[hostName]["opponent"] = username
@@ -242,7 +243,7 @@ class server(BaseHTTPRequestHandler):
         
         if self.path.startswith("/confirmDelete/"):
             # get the username
-            username = self.path.split("/")[2]
+            username = urllib.parse.unquote(self.path.split("/")[2])
             # get the game
             game = self.games[username]
             # if the game is over, increment the confirmDeletes
@@ -260,7 +261,7 @@ class server(BaseHTTPRequestHandler):
     
         if self.path.startswith("/closeGame/"):
             # get the username
-            username = self.path.split("/")[2]
+            username = urllib.parse.unquote(self.path.split("/")[2])
             # get the game
             game = self.games[username]
             # delete the game
