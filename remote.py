@@ -1,6 +1,7 @@
 import requests
 import json
 from actions import *
+import threading
 # import asyncio
 
 # get server ip from serverIP.txt
@@ -20,8 +21,13 @@ class remoteGame():
     display = display()
     forbiddenNames = [""]
     opponentAction = tkinter.IntVar()
+    topText = tkinter.StringVar()
+    gameOver = tkinter.IntVar()
 
     def main(self):
+        # reset variables
+        self.resetVars()
+
         # clear frame
         clearFrame(display.root)
 
@@ -42,7 +48,7 @@ class remoteGame():
             self.joinGame()
         
         # game
-        self.game()
+        self.gameFunc()
 
         # update scores
         self.updateScores()
@@ -54,7 +60,140 @@ class remoteGame():
         display.root.quit()
 
         return
+
+    def disableButton(self, row, column):
+        display.root.grid_slaves(row=row)[column].config(state="disabled")
+        return
     
+    def disableAllButtons(self):
+        for i in range(3):
+            for j in range(3):
+                display.root.grid_slaves(row=i+2, column=j)[0].config(state="disabled")
+        return
+    
+    # enable empty buttons
+    def enableButtons(self):
+        for i in range(3):
+            for j in range(3):
+                if self.game["board"][i][j] == " ":
+                    display.root.grid_slaves(row=i+2, column=j)[0].config(state="normal")
+        return
+
+    # update the board text
+    def updateBoard(self):
+        for i in range(3):
+            for j in range(3):
+                display.root.grid_slaves(row=i+2, column=j)[0].config(text=self.game["board"][i][j])
+
+    def opponentTurn(self):
+        # disable all buttons
+        self.disableAllButtons()
+
+        # update top text to "Waiting for opponent..."
+        self.topText.set("Waiting for opponent...")
+        # show
+        self.display.root.update()
+
+        # wait for opponent to make a move
+        while True:
+            # get current game
+            self.game = json.loads(requests.get(serverIP + "games/" + self.hostName).text)
+
+            # if the game is over, return
+            if self.game["isOver"] == True:
+                self.gameOver.set(1)
+                return
+
+            # if it is your turn, update the board, enable all buttons and update top text to "Your Turn"
+            if self.game["isXTurn"]:
+                if self.yourPiece == "x":
+                    self.updateBoard()
+                    self.enableButtons()
+                    self.topText.set("Your Turn")
+                    self.display.root.update()
+                    break
+            else:
+                if self.yourPiece == "o":
+                    self.updateBoard()
+                    self.enableButtons()
+                    self.topText.set("Your Turn")
+                    self.display.root.update()
+                    break
+
+            # wait for 0.5 seconds
+            time.sleep(0.5)
+
+    # when you click a button
+    def boardClick(self, row, column):
+        # send a post request to the server
+        requests.post(serverIP + "move/" + self.hostName, data={"column": column, "row": row})
+
+        # get current game
+        self.game = json.loads(requests.get(serverIP + "games/" + self.hostName).text)
+
+        # if the game is over, return
+        if self.game["isOver"] == True:
+            self.gameOver.set(1)
+            return
+
+        self.updateBoard()
+
+        # call opponentTurn
+        self.opponentTurn()
+
+    def displayBoard(self):
+        # clear frame
+        clearFrame(display.root)
+
+        # rename frame title to game
+        display.root.title("Game")
+
+        # get current game
+        self.game = json.loads(requests.get(serverIP + "games/" + self.hostName).text)
+
+        # set top text to "Your Turn"
+        self.topText.set("Your Turn")
+        # note: opponentTurn will update the top text if it is not your turn
+
+        # add top text
+        topTextLabel = tkinter.Label(display.root, textvariable=self.topText)
+        topTextLabel.grid(row=0, column=0, columnspan=3)
+
+        # add a 3x3 grid of buttons
+        for row in range(3):
+            for column in range(3):
+                # create button
+                button = tkinter.Button(display.root, text="", command=lambda row=row, column=column: self.boardClick(row, column), font=("Arial", 50), anchor="center", width=3, height=3)
+                button.grid(row=row+2, column=column)
+        
+        # if it isn't your turn, wait for opponent to make a move
+        if self.yourPiece == "o":
+            self.opponentTurn()
+        
+        # wait for gameOver to update
+        display.root.wait_variable(self.gameOver)
+        
+
+    def gameFunc(self):
+        # display board
+        self.displayBoard()
+
+
+    def resetVars(self):
+        self.playerList = json.loads(requests.get(serverIP + "players").text)
+        self.AmHost = False
+        self.hostName = ""
+        self.username = ""
+        self.opponentName = ""
+        self.opponentPiece = ""
+        self.yourPiece = ""
+        self.game = None
+        self.continueVar.set(0)
+        self.opponentAction.set(0)
+        self.forbiddenNames = [""]
+        self.topText = tkinter.StringVar()
+        self.gameOver = tkinter.IntVar()
+
     # no game popup
     def noGame(self):
         # create popup
@@ -90,8 +229,19 @@ class remoteGame():
             players = requests.post(serverIP + "join/" + hostName, data={"name": self.username})
             # if joining was successful
             if players.status_code == 200:
+                # get the current game
+                self.game = json.loads(requests.get(serverIP + "games/" + hostName).text)
                 # update opponent name
                 self.opponentName = hostName
+                # update opponent piece
+                self.opponentPiece = self.game["hostPiece"]
+                # update your piece
+                if self.opponentPiece == "x":
+                    self.yourPiece = "o"
+                else:
+                    self.yourPiece = "x"
+                # update self.hostName
+                self.hostName = hostName
                 break
             else:
                 # popup error message
@@ -99,7 +249,7 @@ class remoteGame():
                 continue
 
     # async function to get opponent
-    async def getOpponent(self):
+    def getOpponent(self):
         while True:
             # get current game
             players = requests.get(serverIP + "games/" + self.username)
@@ -143,8 +293,8 @@ class remoteGame():
         textLabel.pack()
         returnButton.pack()
         
-        # call getOpponent function
-        self.getOpponent()
+        # call getOpponent function in a thread
+        threading.Thread(target=self.getOpponent).start()
 
         # wait for opponent to join
         display.root.wait_variable(self.opponentAction)

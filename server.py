@@ -5,8 +5,8 @@ import os
 import json
 import random
 
-#hostName = "192.168.0.121"
-hostName = "0.0.0.0"
+hostName = "192.168.0.121"
+#hostName = "0.0.0.0"
 hostPort = 1337
 
 # create remoteScores.json file
@@ -15,7 +15,16 @@ if not os.path.exists("remoteScores.json"):
         f.write("{}")
 
 class server(BaseHTTPRequestHandler):
-    # games format "username": {"board": [], "isXTurn": True, "opponent" : None, "gameOver": False, "confirmDelete": 0, "winner": None, "hostPiece": "x"}
+    # games format 
+    # {"username": {
+    #   "board": [],
+    #   "isXTurn": True,
+    #   "opponent" : None,
+    #   "gameOver": False,
+    #   "confirmDelete": 0,
+    #   "winner": None,
+    #   "hostPiece": "x"
+    # }}
     games = {}
     scores = json.load(open('remoteScores.json'))
 
@@ -213,6 +222,9 @@ class server(BaseHTTPRequestHandler):
                 self.send_response(400)
                 self.end_headers()
                 return
+
+            # get the username
+            username = self.rfile.read(int(self.headers['Content-Length'])).decode("utf-8").split("=")[1]
 
             # set the new player's opponent
             self.games[hostName]["opponent"] = username
