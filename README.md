@@ -16,7 +16,7 @@ Note: This has only been tested on Windows 10, results may vary on other operati
 
 # Usage
 Run tictactoe.py in the project directory. To do this, run the following command: \
-    `python tictactoe.py` (or `python3 tictactoe.py` if you are on MacOS or Linux
+    `python tictactoe.py` (or `python3 tictactoe.py` if you are on MacOS or Linux)
 
 After running the program, a menu will appear. Click on the menu item you want to use.
 
