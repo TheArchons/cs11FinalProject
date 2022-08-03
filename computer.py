@@ -413,7 +413,7 @@ class computer():
         if (1, 1) in adjacents: # if the middle is open, place there
             self.board[1][1] = self.computer
             calculating()
-            return True, [i[0], i[1]]
+            return True, [1, 1]
 
         for i in [(0, 0), (0, 2), (2, 0), (2, 2)]: # if it is in the corners, place there
             if i in adjacents:
