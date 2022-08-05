@@ -1,3 +1,4 @@
+from random import uniform
 import time
 import tkinter
 
@@ -63,9 +64,9 @@ def checkTie(board):
 
 def calculating():
     # fake calculating
-    # note: I added a bit of delay to make it seem like the computer is thinking
+    # note: I added a bit of delay to make it seem like the computer is thinking. Randomized from 0.25 to 0.75 seconds
     print("calculating...")
-    time.sleep(0.5)
+    time.sleep(uniform(0.25, 0.75))
     return
 
 # setup a tic tac toe board as a 2d array
