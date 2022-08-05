@@ -407,7 +407,7 @@ class computer():
 
         return [randomSpace[0], randomSpace[1]]
 
-    def placeAdjacent(self, piece):
+    def placeAdjacent(self, piece, skipCorners = False):
         adjacents = findAdjacents(self.board, piece)
 
         if (1, 1) in adjacents: # if the middle is open, place there
@@ -415,11 +415,12 @@ class computer():
             calculating()
             return True, [1, 1]
 
-        for i in [(0, 0), (0, 2), (2, 0), (2, 2)]: # if it is in the corners, place there
-            if i in adjacents:
-                self.board[i[0]][i[1]] = self.computer
-                calculating()
-                return True, [i[0], i[1]]
+        if not skipCorners: # if we do not want to skip the corners
+            for i in [(0, 0), (0, 2), (2, 0), (2, 2)]: # if it is in the corners, place there
+                if i in adjacents:
+                    self.board[i[0]][i[1]] = self.computer
+                    calculating()
+                    return True, [i[0], i[1]]
         
         for i in [(0, 1), (1, 0), (1, 2), (2, 1)]: # if it is in the sides, place there
             if i in adjacents:
@@ -473,6 +474,13 @@ class computer():
         
         return False, []
 
+    def antiFork(self, piece):
+        # if the two opposite corners are taken by the player and the center has been taken by the computer, place adjacent
+        playerPiece = "o" if piece == "x" else "x"
+        if (self.board[0][0] == playerPiece and self.board[2][2] == playerPiece and self.board[1][1] == piece) or (self.board[0][2] == playerPiece and self.board[2][0] == playerPiece and self.board[1][1] == piece):
+            return self.placeAdjacent(piece, True)
+        return False, []
+
     def computerEasy(self):
         # this ai will just pick a random spot
         # note: should be relatively easy to win, as long as you don't get unlucky
@@ -499,21 +507,27 @@ class computer():
 
         # 2. check if the player can win, if so, block
 
-        # 3. check if the computer can place adjacent to one of the computer's pieces, if so, place there in the following order
+        # 3. if the player can force a fork, place beside or above/below the center
+        # such as when in this situation:
+        # x
+        #  o
+        #   x
+
+        # 4. check if the computer can place adjacent to one of the computer's pieces, if so, place there in the following order
         #   a. if the corners are open, place there
         #   b. if the sides are open, place there
         #   note: we do not need to check the center, because the computer's first piece will be in the center unless taken by the player
 
-        # 4. check if the computer can place adjacent to one of the player's pieces, if so, place there in the following order
+        # 5. check if the computer can place adjacent to one of the player's pieces, if so, place there in the following order
         #   a. if the middle is open, place there
         #   b. if the corners are open, place there
         #   c. if the sides are open, place there
 
-        # 5. check if the center is empty, if so, take it
+        # 6. check if the center is empty, if so, take it
 
-        # 6. check if the corners are empty, if so, take one of them
+        # 7. check if the corners are empty, if so, take one of them
 
-        # 7. check if the sides are empty, if so, take one of them
+        # 8. check if the sides are empty, if so, take one of them
 
         # note: I believe the ai will never lose
 
@@ -526,6 +540,11 @@ class computer():
         winning = self.winningMove(self.player)
         if winning[0]:
             return winning[1]
+
+        # prevent a fork
+        fork = self.antiFork(self.computer)
+        if fork[0]:
+            return fork[1]
         
         # check if the computer can place adjacent to one of the computer's pieces
         adjacent = self.placeAdjacent(self.computer)
