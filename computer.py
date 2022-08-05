@@ -507,12 +507,13 @@ class computer():
 
         # 2. check if the player can win, if so, block
 
-        # 3. if the player can force a fork, place beside or above/below the center
-        # such as when in this situation:
+        # 3. if the player can force a fork, place beside or above/below the center.
+        # If this is not done, the player may place in any open corner, creating a fork.
+        # By placing adjacent, this forces the player to block the computer, preventing a fork.
+        # An example would be this situation:
         # x
         #  o
         #   x
-
         # 4. check if the computer can place adjacent to one of the computer's pieces, if so, place there in the following order
         #   a. if the corners are open, place there
         #   b. if the sides are open, place there
