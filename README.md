@@ -36,4 +36,4 @@ After running the program, a menu will appear. Click on the menu item you want t
 This is because I wanted to organize the code a bit, as the entire project has more than 2000 lines of code. These are split for their purposes. For example, local.py is the file that contains the code for local games, while test_main.py is for testing with pytest.
 
 # What's the justfile?
-The justfile is similar to a shell script, but it is cross-platform and allows multiple commands. More information at **[just](https://github.com/casey/just)**.
+The justfile is similar to a shell script, but it is cross-platform and allows multiple scripts. More information at **[just](https://github.com/casey/just)**.
